@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盛り盛り伝言BBS</title>
+<style>
+:root {
+  --yellow: #ffd93d;
+  --pink: #ff6b9d;
+  --teal: #3ec9c0;
+  --outline: #1a1a1a;
+  --white: #fffdf7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Yu Gothic", sans-serif;
+  background: #223022;
+  color: var(--outline);
+}
+
+.bg {
+  position: relative;
+  height: 100%;
+  background-image:
+    linear-gradient(to bottom, rgba(20,20,10,0.15) 0%, rgba(20,20,10,0.05) 25%, rgba(10,15,10,0.55) 72%, rgba(5,10,5,0.75) 100%),
+    url("images/forest-bg.webp");
+  background-size: cover;
+  background-position: center;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== 記念画像 ===== */
+.milestone-img {
+  display: none;
+  max-width: 220px;
+  width: 70%;
+  margin-bottom: 2px;
+  filter: drop-shadow(3px 3px 0 var(--outline));
+}
+.milestone-img.show { display: block; }
+
+/* ===== でっかいタイトル(横書き) ===== */
+h1 {
+  font-size: 30px;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--white);
+  margin: 4px 0 4px;
+  -webkit-text-stroke: 2.2px var(--outline);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--pink);
+  letter-spacing: 0.01em;
+}
+
+.tagline {
+  color: var(--white);
+  background: var(--outline);
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+/* ===== ステージ(ボタン列とパネルの入れ替え舞台) ===== */
+.stage {
+  width: 100%;
+  max-width: 400px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.32s ease, opacity 0.32s ease;
+}
+.menu-row.slide-out {
+  transform: translateX(-140%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.big-btn {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--outline);
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  padding: 12px 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--outline);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.big-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+.big-btn.yellow { background: var(--yellow); }
+.big-btn.pink { background: var(--pink); color: var(--white); }
+.big-btn.teal { background: var(--teal); }
+
+/* ===== パネル(結果表示エリア) ===== */
+.panel {
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--white);
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--outline);
+  padding: 14px;
+  transform: translateX(30px);
+  opacity: 0;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+.panel.show {
+  display: block;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.back-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--outline);
+  background: none;
+  border: none;
+  padding: 0 0 8px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+textarea, input[type=text] {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px;
+  border: 2.5px solid var(--outline);
+  border-radius: 8px;
+  margin: 5px 0;
+  resize: vertical;
+}
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+.char-count {
+  font-size: 10px;
+  text-align: right;
+  color: #555;
+}
+
+.small-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--outline);
+  background: var(--yellow);
+  border: 2.5px solid var(--outline);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 var(--outline);
+  margin-top: 6px;
+}
+.small-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--outline); }
+.small-btn.pink { background: var(--pink); color: var(--white); }
+.small-btn.teal { background: var(--teal); }
+
+.story-sheet {
+  background: #fffbe8;
+  border: 2.5px dashed var(--outline);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+
+.lineage-item {
+  border-left: 3px solid var(--pink);
+  padding-left: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.lineage-item b { color: var(--pink); }
+
+.empty-note {
+  font-size: 12px;
+  color: #555;
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <img id="milestone-img" class="milestone-img" src="" alt="投稿数記念">
+  <h1>盛り盛り伝言BBS</h1>
+  <div class="tagline">本当のメディアが、ここにある</div>
+
+  <div class="stage">
+    <div class="menu-row" id="menu-row">
+      <button class="big-btn yellow" onclick="showPanel('panel-new')">最初の話を投稿</button>
+      <button class="big-btn pink" onclick="showPanel('panel-moru')">話を盛る</button>
+      <button class="big-btn teal" onclick="showPanel('panel-view')">盛られた話を見る</button>
+    </div>
+
+    <!-- ① 最初の話を投稿 -->
+    <div class="panel" id="panel-new">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>最初の話を投稿</h2>
+      <label>投稿者名(12文字まで)</label>
+      <input type="text" id="new-author" maxlength="12" placeholder="名無しの書き手">
+      <label>最初の話(100文字まで)</label>
+      <textarea id="new-body" rows="3" maxlength="100" placeholder="ちょっと面白い話、驚いた話を一つ…"></textarea>
+      <div class="char-count"><span id="new-body-count">0</span>/100</div>
+      <button class="small-btn" onclick="postNewStory()">投稿する</button>
+    </div>
+
+    <!-- ② 話を盛る -->
+    <div class="panel" id="panel-moru">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>話を盛る</h2>
+      <button class="small-btn pink" onclick="fetchMoruTarget()">元ネタを引く</button>
+      <div id="moru-sheet"></div>
+      <div id="moru-form" style="display:none;">
+        <label>投稿者名(12文字まで)</label>
+        <input type="text" id="moru-author" maxlength="12" placeholder="名無しの書き手">
+        <label>盛った話</label>
+        <textarea id="moru-body" rows="4" placeholder="ここでどれだけ盛るかはあなた次第…"></textarea>
+        <div class="char-count"><span id="moru-body-count">0</span>/<span id="moru-max">-</span></div>
+        <button class="small-btn pink" onclick="submitMoru()">盛って投稿</button>
+      </div>
+    </div>
+
+    <!-- ③ 盛られた話を見る -->
+    <div class="panel" id="panel-view">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>盛られた話を見る</h2>
+      <button class="small-btn teal" onclick="fetchCompleteStory()">1つ開く</button>
+      <div id="complete-doc"></div>
+      <div id="lineage-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ★ デプロイ後のGAS WebアプリURLに置き換えてね
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxP1G8N-TWi6pRN243VHsuP2Fb6jXRPYKKtdac9R1cG7pIYOl_PQ5i9G0qztZqHu5xMsA/exec";
+
+let currentMoruPost = null;
+let currentCompletePost = null;
+
+// ---- ボタン列⇔パネルの切り替え ----
+function showPanel(id) {
+  document.getElementById("menu-row").classList.add("slide-out");
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("show", p.id === id));
+}
+function hidePanels() {
+  document.getElementById("menu-row").classList.remove("slide-out");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+}
+
+document.getElementById("new-body").addEventListener("input", e => {
+  document.getElementById("new-body-count").textContent = e.target.value.length;
+});
+document.getElementById("moru-body").addEventListener("input", e => {
+  document.getElementById("moru-body-count").textContent = e.target.value.length;
+});
+
+function checkMilestone() {
+  fetch(GAS_URL + "?action=getStatus")
+    .then(r => r.json())
+    .then(data => {
+      const img = document.getElementById("milestone-img");
+      if (data.milestone10000) {
+        img.src = "images/milestone-10000.png";
+        img.classList.add("show");
+      } else if (data.milestone2000) {
+        img.src = "images/milestone-2000.png";
+        img.classList.add("show");
+      } else {
+        img.classList.remove("show");
+      }
+    })
+    .catch(() => {});
+}
+
+function postNewStory() {
+  const author = document.getElementById("new-author").value || "名無し";
+  const body = document.getElementById("new-body").value;
+  if (!body) { alert("話がまだ空っぽよ！"); return; }
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ layer: 1, parentId: "", body, author })
+  })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById("new-body").value = "";
+      document.getElementById("new-body-count").textContent = "0";
+      alert("投稿したよ！誰かが盛ってくれるはず！");
+      checkMilestone();
+    });
+}
+
+function fetchMoruTarget() {
+  fetch(GAS_URL + "?action=getMoru")
+    .then(r => r.json())
+    .then(data => {
+      currentMoruPost = data;
+      const sheetEl = document.getElementById("moru-sheet");
+      const formEl = document.getElementById("moru-form");
+
+      if (data.error) {
+        sheetEl.innerHTML = '<p class="empty-note">今は盛れる話が無いみたい！</p>';
+        formEl.style.display = "none";
+        return;
+      }
+
+      sheetEl.innerHTML = '<div class="story-sheet">' + escapeHtml(data.body) + '</div>';
+      formEl.style.display = "block";
+
+      const maxLen = maxBodyLengthForLayer(Number(data.layer));
+      document.getElementById("moru-max").textContent = maxLen;
+      document.getElementById("moru-body").setAttribute("maxlength", maxLen);
+      document.getElementById("moru-body").value = "";
+      document.getElementById("moru-body-count").textContent = "0";
+    });
+}
+
+function submitMoru() {
+  if (!currentMoruPost || !currentMoruPost.postId) return;
+  const author = document.getElementById("moru-author").value || "名無し";
+  const body = document.getElementById("moru-body").value;
+  if (!body) { alert("盛った内容がまだ空っぽよ！"); return; }
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      layer: Number(currentMoruPost.layer) + 1,
+      parentId: currentMoruPost.postId,
+      body, author
+    })
+  })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById("moru-sheet").innerHTML = "";
+      document.getElementById("moru-form").style.display = "none";
+      currentMoruPost = null;
+      alert("盛って投稿したよ！");
+      checkMilestone();
+    });
+}
+
+function maxBodyLengthForLayer(layer) {
+  if (layer === 1) return 100;
+  return Math.pow(2, layer - 1) * 100;
+}
+
+function fetchCompleteStory() {
+  fetch(GAS_URL + "?action=getComplete")
+    .then(r => r.json())
+    .then(data => {
+      currentCompletePost = data;
+      const docEl = document.getElementById("complete-doc");
+      const lineageEl = document.getElementById("lineage-wrap");
+      lineageEl.innerHTML = "";
+
+      if (data.error) {
+        docEl.innerHTML = '<p class="empty-note">まだ育ちきった話は無いみたい！</p>';
+        return;
+      }
+
+      docEl.innerHTML =
+        '<div class="story-sheet">' + escapeHtml(data.body) + '</div>' +
+        '<button class="small-btn teal" onclick="fetchLog()">ログを見る</button>';
+    });
+}
+
+function fetchLog() {
+  if (!currentCompletePost || !currentCompletePost.postId) return;
+
+  fetch(GAS_URL + "?action=getLog&postId=" + encodeURIComponent(currentCompletePost.postId) + "&layer=" + currentCompletePost.layer)
+    .then(r => r.json())
+    .then(data => {
+      const lineageEl = document.getElementById("lineage-wrap");
+      if (!data.chain || data.chain.length === 0) {
+        lineageEl.innerHTML = '<p class="empty-note">ログを辿れなかったわ。</p>';
+        return;
+      }
+
+      let html = "";
+      data.chain.forEach(post => {
+        html += '<div class="lineage-item"><b>' + escapeHtml(post.author || "名無し") +
+          '</b>(第' + post.layer + '階層)<br>' + escapeHtml(post.body) + '</div>';
+      });
+      lineageEl.innerHTML = html;
+    });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+window.onload = checkMilestone;
+</script>
+
+</body>
+</html>
