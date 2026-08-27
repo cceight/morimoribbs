@@ -427,7 +427,7 @@ label {
 
 <script>
 // ★ デプロイ後のGAS WebアプリURLに置き換えてね
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxP1G8N-TWi6pRN243VHsuP2Fb6jXRPYKKtdac9R1cG7pIYOl_PQ5i9G0qztZqHu5xMsA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz9xLQpLIf5L7OyOQtcdOIEw003wUHx6TT3V_RFNadfuc6yzgZ3zL0IqmhyPfrDsK7mNQ/exec";
 
 let currentMoruPost = null;
 let currentCompletePost = null;
@@ -558,7 +558,7 @@ function showMoruDone(body) {
 
 function maxBodyLengthForLayer(layer) {
   if (layer === 1) return 100;
-  return Math.pow(2, layer - 1) * 100;
+  return Math.pow(2, layer) * 100;
 }
 
 function fetchCompleteStory() {
