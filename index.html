@@ -427,7 +427,7 @@ label {
 
 <script>
 // ★ デプロイ後のGAS WebアプリURLに置き換えてね
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz9xLQpLIf5L7OyOQtcdOIEw003wUHx6TT3V_RFNadfuc6yzgZ3zL0IqmhyPfrDsK7mNQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxv0kggbXuiFdIexO0qbxlv5olvru1m0p_d0kVeFevEzZdZVcSCLunkeOloVQXh43EP-Q/exec";
 
 let currentMoruPost = null;
 let currentCompletePost = null;
@@ -512,7 +512,7 @@ function fetchMoruTarget() {
       formEl.style.display = "block";
       document.getElementById("moru-done").innerHTML = "";
 
-      const maxLen = maxBodyLengthForLayer(Number(data.layer));
+      const maxLen = maxBodyLengthForLayer(Number(data.layer) +1);
       document.getElementById("moru-max").textContent = maxLen;
       document.getElementById("moru-body").setAttribute("maxlength", maxLen);
       document.getElementById("moru-body").value = "";
@@ -558,7 +558,7 @@ function showMoruDone(body) {
 
 function maxBodyLengthForLayer(layer) {
   if (layer === 1) return 100;
-  return Math.pow(2, layer) * 100;
+  return Math.pow(2, layer -1) * 100;
 }
 
 function fetchCompleteStory() {
