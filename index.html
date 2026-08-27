@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盛り盛り伝言BBS</title>
+<style>
+:root {
+  --yellow: #ffd93d;
+  --pink: #ff6b9d;
+  --teal: #3ec9c0;
+  --outline: #1a1a1a;
+  --white: #fffdf7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Yu Gothic", sans-serif;
+  background: #223022;
+  color: var(--outline);
+}
+
+.bg {
+  position: relative;
+  height: 100%;
+  background-image:
+    linear-gradient(to bottom, rgba(20,20,10,0.15) 0%, rgba(20,20,10,0.05) 25%, rgba(10,15,10,0.55) 72%, rgba(5,10,5,0.75) 100%),
+    url("images/forest-bg.webp");
+  background-size: cover;
+  background-position: center;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== 記念画像 ===== */
+.milestone-img {
+  display: none;
+  max-width: 220px;
+  width: 70%;
+  margin-bottom: 2px;
+  filter: drop-shadow(3px 3px 0 var(--outline));
+}
+.milestone-img.show { display: block; }
+
+/* ===== でっかいタイトル(横書き) ===== */
+h1 {
+  font-size: 30px;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--white);
+  margin: 4px 0 4px;
+  -webkit-text-stroke: 2.2px var(--outline);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--pink);
+  letter-spacing: 0.01em;
+}
+
+.tagline {
+  color: var(--white);
+  background: var(--outline);
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+/* ===== ステージ(ボタン列とパネルの入れ替え舞台) ===== */
+.stage {
+  width: 100%;
+  max-width: 400px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.32s ease, opacity 0.32s ease;
+}
+.menu-row.slide-out {
+  transform: translateX(-140%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.big-btn {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--outline);
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  padding: 12px 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--outline);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.big-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+.big-btn.yellow { background: var(--yellow); }
+.big-btn.pink { background: var(--pink); color: var(--white); }
+.big-btn.teal { background: var(--teal); }
+
+/* ===== パネル(結果表示エリア) ===== */
+.panel {
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--white);
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--outline);
+  padding: 14px;
+  transform: translateX(30px);
+  opacity: 0;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+.panel.show {
+  display: block;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.back-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--outline);
+  background: none;
+  border: none;
+  padding: 0 0 8px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+textarea, input[type=text] {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px;
+  border: 2.5px solid var(--outline);
+  border-radius: 8px;
+  margin: 5px 0;
+  resize: vertical;
+}
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+.char-count {
+  font-size: 10px;
+  text-align: right;
+  color: #555;
+}
+
+.small-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--outline);
+  background: var(--yellow);
+  border: 2.5px solid var(--outline);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 var(--outline);
+  margin-top: 6px;
+}
+.small-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--outline); }
+.small-btn.pink { background: var(--pink); color: var(--white); }
+.small-btn.teal { background: var(--teal); }
+
+.exclude-sample-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: bold;
+  margin: 6px 0 0 8px;
+  cursor: help;
+}
+.exclude-sample-label input {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.story-sheet {
+  background: #fffbe8;
+  border: 2.5px dashed var(--outline);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+
+.lineage-item {
+  border-left: 3px solid var(--pink);
+  padding-left: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.lineage-item b { color: var(--pink); }
+
+.empty-note {
+  font-size: 12px;
+  color: #555;
+}
+
+/* ===== チュートリアルオーバーレイ ===== */
+#tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,10,0.78);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#tutorial-overlay.hidden { display: none; }
+
+.tutorial-card {
+  background: var(--white);
+  border: 3px solid var(--outline);
+  border-radius: 16px;
+  box-shadow: 5px 5px 0 var(--outline);
+  padding: 20px 18px;
+  max-width: 340px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.tutorial-card h2 {
+  font-size: 19px;
+  text-align: center;
+  margin: 0 0 4px;
+}
+.tutorial-card .tutorial-sub {
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 14px;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 2.5px solid var(--outline);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.tutorial-step.yellow { background: #fff6d0; }
+.tutorial-step.pink { background: #ffe3ee; }
+.tutorial-step.teal { background: #dbf6f3; }
+
+.tutorial-step .num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid var(--outline);
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+}
+.tutorial-step .txt p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tutorial-step .txt b { display: block; font-size: 14px; margin-bottom: 2px; }
+
+.tutorial-start-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--outline);
+  background: var(--yellow);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--outline);
+}
+.tutorial-start-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--outline); }
+
+/* ===== 投稿完了パネル(SNSシェア) ===== */
+.post-done {
+  border: 2.5px dashed var(--outline);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  background: #fffbe8;
+}
+.post-done p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.tweet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--white);
+  background: #1a9df9;
+  border: 2.5px solid var(--outline);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 var(--outline);
+  text-decoration: none;
+}
+.tweet-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--outline); }
+</style>
+</head>
+<body>
+
+<div id="tutorial-overlay">
+  <div class="tutorial-card">
+    <h2>盛り盛り伝言BBSへようこそ</h2>
+    <div class="tutorial-sub">遊び方はこの3つだけ</div>
+
+    <div class="tutorial-step yellow">
+      <div class="num">1</div>
+      <div class="txt">
+        <b>最初の話を投稿</b>
+        <p>好きな話を一つ登録してね。</p>
+      </div>
+    </div>
+
+    <div class="tutorial-step pink">
+      <div class="num">2</div>
+      <div class="txt">
+        <b>話を盛る</b>
+        <p>誰かの話がランダムで一枚届くよ。好きなだけ盛って投稿してね。</p>
+      </div>
+    </div>
+
+    <div class="tutorial-step teal">
+      <div class="num">3</div>
+      <div class="txt">
+        <b>盛られた話を見る</b>
+        <p>六人分盛られて育ちきった話を閲覧。ログを見れば、どう膨らんでいったかの系譜が分かる。</p>
+      </div>
+    </div>
+
+    <button class="tutorial-start-btn" onclick="closeTutorial()">はじめる</button>
+  </div>
+</div>
+
+<div class="bg">
+  <img id="milestone-img" class="milestone-img" src="" alt="投稿数記念">
+  <h1>盛り盛り伝言BBS</h1>
+  <div class="tagline">本当のメディアが、ここにある</div>
+
+  <div class="stage">
+    <div class="menu-row" id="menu-row">
+      <button class="big-btn yellow" onclick="showPanel('panel-new')">最初の話を投稿</button>
+      <button class="big-btn pink" onclick="showPanel('panel-moru')">話を盛る</button>
+      <button class="big-btn teal" onclick="showPanel('panel-view')">盛られた話を見る</button>
+    </div>
+
+    <!-- ① 最初の話を投稿 -->
+    <div class="panel" id="panel-new">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>最初の話を投稿</h2>
+      <label>投稿者名(12文字まで)</label>
+      <input type="text" id="new-author" maxlength="12" placeholder="名無しの書き手">
+      <label>最初の話(100文字まで)</label>
+      <textarea id="new-body" rows="3" maxlength="100" placeholder="ちょっと面白い話、驚いた話を一つ…"></textarea>
+      <div class="char-count"><span id="new-body-count">0</span>/100</div>
+      <button class="small-btn" onclick="postNewStory()">投稿する</button>
+    </div>
+
+    <!-- ② 話を盛る -->
+    <div class="panel" id="panel-moru">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>話を盛る</h2>
+      <button class="small-btn pink" onclick="fetchMoruTarget()">元ネタを引く</button>
+      <label class="exclude-sample-label" title="投稿が集まってきたからサンプルじゃない文のほうが楽しいと思うよ">
+        <input type="checkbox" id="exclude-sample" checked>
+        サンプルを検索から除外する
+      </label>
+      <div id="moru-sheet"></div>
+      <div id="moru-form" style="display:none;">
+        <label>投稿者名(12文字まで)</label>
+        <input type="text" id="moru-author" maxlength="12" placeholder="名無しの書き手">
+        <label>盛った話</label>
+        <textarea id="moru-body" rows="4" placeholder="ここでどれだけ盛るかはあなた次第…"></textarea>
+        <div class="char-count"><span id="moru-body-count">0</span>/<span id="moru-max">-</span></div>
+        <button class="small-btn pink" onclick="submitMoru()">盛って投稿</button>
+      </div>
+      <div id="moru-done"></div>
+    </div>
+
+    <!-- ③ 盛られた話を見る -->
+    <div class="panel" id="panel-view">
+      <button class="back-btn" onclick="hidePanels()">← もどる</button>
+      <h2>盛られた話を見る</h2>
+      <button class="small-btn teal" onclick="fetchCompleteStory()">1つ開く</button>
+      <div id="complete-doc"></div>
+      <div id="lineage-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ★ デプロイ後のGAS WebアプリURLに置き換えてね
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxv0kggbXuiFdIexO0qbxlv5olvru1m0p_d0kVeFevEzZdZVcSCLunkeOloVQXh43EP-Q/exec";
+
+let currentMoruPost = null;
+let currentCompletePost = null;
+
+// ---- チュートリアルオーバーレイ ----
+function closeTutorial() {
+  document.getElementById("tutorial-overlay").classList.add("hidden");
+  localStorage.setItem("tutorialSeen", "1");
+}
+if (localStorage.getItem("tutorialSeen") === "1") {
+  document.getElementById("tutorial-overlay").classList.add("hidden");
+}
+
+// ---- ボタン列⇔パネルの切り替え ----
+function showPanel(id) {
+  document.getElementById("menu-row").classList.add("slide-out");
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("show", p.id === id));
+}
+function hidePanels() {
+  document.getElementById("menu-row").classList.remove("slide-out");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+}
+
+document.getElementById("new-body").addEventListener("input", e => {
+  document.getElementById("new-body-count").textContent = e.target.value.length;
+});
+document.getElementById("moru-body").addEventListener("input", e => {
+  document.getElementById("moru-body-count").textContent = e.target.value.length;
+});
+
+function checkMilestone() {
+  fetch(GAS_URL + "?action=getStatus")
+    .then(r => r.json())
+    .then(data => {
+      const img = document.getElementById("milestone-img");
+      if (data.milestone10000) {
+        img.src = "images/milestone-10000.png";
+        img.classList.add("show");
+      } else if (data.milestone2000) {
+        img.src = "images/milestone-2000.png";
+        img.classList.add("show");
+      } else {
+        img.classList.remove("show");
+      }
+    })
+    .catch(() => {});
+}
+
+function postNewStory() {
+  const authorInput = document.getElementById("new-author").value;
+  if (authorInput === "サンプル") { alert("無効な投稿者名です。"); return; }
+  const author = authorInput || "名無し";
+  const body = document.getElementById("new-body").value;
+  if (!body) { alert("話がまだ空っぽだよ！"); return; }
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ layer: 1, parentId: "", body, author })
+  })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById("new-body").value = "";
+      document.getElementById("new-body-count").textContent = "0";
+      alert("投稿したよ！誰かが盛ってくれるはず！");
+      checkMilestone();
+    });
+}
+
+function fetchMoruTarget() {
+  const excludeSample = document.getElementById("exclude-sample").checked;
+  fetch(GAS_URL + "?action=getMoru&excludeSample=" + excludeSample)
+    .then(r => r.json())
+    .then(data => {
+      currentMoruPost = data;
+      const sheetEl = document.getElementById("moru-sheet");
+      const formEl = document.getElementById("moru-form");
+
+      if (data.error) {
+        sheetEl.innerHTML = '<p class="empty-note">今は盛れる話が無いみたい！</p>';
+        formEl.style.display = "none";
+        return;
+      }
+
+      sheetEl.innerHTML = '<div class="story-sheet">' + escapeHtml(data.body) + '</div>';
+      formEl.style.display = "block";
+      document.getElementById("moru-done").innerHTML = "";
+
+      const maxLen = maxBodyLengthForLayer(Number(data.layer) +1);
+      document.getElementById("moru-max").textContent = maxLen;
+      document.getElementById("moru-body").setAttribute("maxlength", maxLen);
+      document.getElementById("moru-body").value = "";
+      document.getElementById("moru-body-count").textContent = "0";
+    });
+}
+
+function submitMoru() {
+  if (!currentMoruPost || !currentMoruPost.postId) return;
+  const moruAuthorInput = document.getElementById("moru-author").value;
+  if (moruAuthorInput === "サンプル") { alert("無効な投稿者名です。"); return; }
+  const author = moruAuthorInput || "名無し";
+  const body = document.getElementById("moru-body").value;
+  if (!body) { alert("盛った内容がまだ空っぽだよ！"); return; }
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      layer: Number(currentMoruPost.layer) + 1,
+      parentId: currentMoruPost.postId,
+      body, author
+    })
+  })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById("moru-sheet").innerHTML = "";
+      document.getElementById("moru-form").style.display = "none";
+      currentMoruPost = null;
+      showMoruDone(body);
+      checkMilestone();
+    });
+}
+
+function showMoruDone(body) {
+  const doneEl = document.getElementById("moru-done");
+  const tweetText = "話を盛りました\n#盛り伝BBS\n\n" + body;
+  const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(tweetText) + "&url=" + encodeURIComponent(location.href);
+
+  doneEl.innerHTML =
+    '<div class="post-done">' +
+      '<p>投稿しました！</p>' +
+      '<a class="tweet-btn" href="' + tweetUrl + '" target="_blank" rel="noopener">盛った話をツイッターに投稿</a>' +
+    '</div>';
+}
+
+function maxBodyLengthForLayer(layer) {
+  if (layer === 1) return 100;
+  return Math.pow(2, layer -1) * 100;
+}
+
+function fetchCompleteStory() {
+  fetch(GAS_URL + "?action=getComplete")
+    .then(r => r.json())
+    .then(data => {
+      currentCompletePost = data;
+      const docEl = document.getElementById("complete-doc");
+      const lineageEl = document.getElementById("lineage-wrap");
+      lineageEl.innerHTML = "";
+
+      if (data.error) {
+        docEl.innerHTML = '<p class="empty-note">まだ育ちきった話は無いみたい！</p>';
+        return;
+      }
+
+      docEl.innerHTML =
+        '<div class="story-sheet">' + escapeHtml(data.body) + '</div>' +
+        '<button class="small-btn teal" onclick="fetchLog()">ログを見る</button>';
+    });
+}
+
+function fetchLog() {
+  if (!currentCompletePost || !currentCompletePost.postId) return;
+
+  fetch(GAS_URL + "?action=getLog&postId=" + encodeURIComponent(currentCompletePost.postId) + "&layer=" + currentCompletePost.layer)
+    .then(r => r.json())
+    .then(data => {
+      const lineageEl = document.getElementById("lineage-wrap");
+      if (!data.chain || data.chain.length === 0) {
+        lineageEl.innerHTML = '<p class="empty-note">ログを辿れなかったわ。</p>';
+        return;
+      }
+
+      let html = "";
+      data.chain.forEach(post => {
+        html += '<div class="lineage-item"><b>' + escapeHtml(post.author || "名無し") +
+          '</b>(第' + post.layer + '階層)<br>' + escapeHtml(post.body) + '</div>';
+      });
+      lineageEl.innerHTML = html;
+    });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+window.onload = checkMilestone;
+</script>
+
+</body>
+</html>
